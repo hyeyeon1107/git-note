@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Git · 리눅스 명령어 노트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: single study column — workflow map on top, then grouped command rows that expand on tap */
+:root {
+  --bg: #f3f5f4;
+  --surface: #ffffff;
+  --fg: #1b2423;
+  --muted: #5d6b69;
+  --line: #d9e0de;
+  --accent: #0f7a6c;
+  --accent-soft: #e0f0ec;
+  --code-bg: #eef2f1;
+  --warn: #a4560c;
+  --warn-soft: #fbeedd;
+  --term: #1f2928; --term-fg: #cfe3de;
+  --z1: #e9eef6; --z2: #fdf3dc; --z3: #e0f0ec; --z4: #ece6f6;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "Consolas", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121817; --surface: #1a2221; --fg: #e3ebe9; --muted: #95a5a2; --line: #2c3836;
+  --accent: #4cc4b0; --accent-soft: #1d3632; --code-bg: #222c2b; --warn: #f0a75c; --warn-soft: #3a2a19;
+  --term: #0b100f; --term-fg: #bfe0d8; --z1: #1e2633; --z2: #33291a; --z3: #1d3632; --z4: #2a2338; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121817; --surface: #1a2221; --fg: #e3ebe9; --muted: #95a5a2; --line: #2c3836;
+  --accent: #4cc4b0; --accent-soft: #1d3632; --code-bg: #222c2b; --warn: #f0a75c; --warn-soft: #3a2a19;
+  --term: #0b100f; --term-fg: #bfe0d8; --z1: #1e2633; --z2: #33291a; --z3: #1d3632; --z4: #2a2338; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html { color-scheme: light; } body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: flex; flex-direction: column; gap: 28px; }
+code, .mono { font-family: var(--f-mono); }
+
+header h1 { font-size: 1.75rem; margin: 0 0 4px; letter-spacing: -0.01em; text-wrap: balance; }
+header h1 span { font-family: var(--f-mono); color: var(--accent); font-weight: 600; }
+header p { margin: 0; color: var(--muted); }
+
+/* Workflow map */
+.flow { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+.flow h2, .group h2 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; font-weight: 700; }
+.zones { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; align-items: stretch; gap: 6px; }
+.zone { border-radius: 8px; padding: 12px 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.zone b { display: block; font-size: 0.95rem; }
+.zone small { color: var(--muted); font-size: 0.75rem; line-height: 1.35; display: block; margin-top: 2px; }
+.z1 { background: var(--z1); } .z2 { background: var(--z2); } .z3 { background: var(--z3); } .z4 { background: var(--z4); }
+.arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.arrow button { font-family: var(--f-mono); font-size: 0.78rem; font-weight: 600; background: var(--fg); color: var(--bg); border: 0; border-radius: 999px; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
+.arrow button:hover, .arrow button:focus-visible { background: var(--accent); outline: none; }
+.arrow i { font-style: normal; color: var(--muted); font-size: 1.1rem; line-height: 1; }
+.back { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
+.back button { font-family: var(--f-mono); font-size: 0.78rem; background: none; border: 1px dashed var(--muted); color: var(--fg); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+.back button:hover, .back button:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+.tip { margin-top: 12px; font-size: 0.88rem; background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; }
+
+@media (max-width: 640px) {
+  .zones { grid-template-columns: 1fr; }
+  .arrow { flex-direction: row; padding: 2px 0; }
+  .arrow i { transform: rotate(90deg); }
+}
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; background: var(--code-bg); padding: 4px; border-radius: 10px; width: fit-content; max-width: 100%; }
+.tab { font: inherit; font-weight: 600; font-size: 0.95rem; border: 0; background: none; color: var(--muted); padding: 7px 18px; border-radius: 7px; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.tab:focus-visible { outline: 2px solid var(--accent); }
+.panel { display: flex; flex-direction: column; gap: 28px; }
+/* vi modes */
+.modes { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+.modes .arrow { gap: 6px; }
+.modes .arrow span { font-size: 0.78rem; color: var(--muted); }
+@media (max-width: 640px) { .modes { grid-template-columns: 1fr; } .modes .arrow { flex-direction: row; flex-wrap: wrap; justify-content: center; } }
+.paths { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.88rem; }
+.paths div { background: var(--code-bg); border-radius: 6px; padding: 6px 10px; }
+.paths code { color: var(--accent); font-weight: 600; }
+
+/* Toolbar */
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); padding-block: 8px; z-index: 2; }
+.tools input[type=search] { flex: 1 1 220px; min-width: 0; font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.tools input[type=search]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; user-select: none; }
+.toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+.btn { font: inherit; font-size: 0.85rem; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.btn:hover, .btn:focus-visible { border-color: var(--accent); outline: none; }
+
+/* Command groups */
+.groups { display: flex; flex-direction: column; gap: 28px; }
+.group { display: flex; flex-direction: column; }
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.cmd { border-top: 1px solid var(--line); }
+.cmd:first-child { border-top: 0; }
+.cmd.flash { animation: flash 1.4s ease-out; }
+@keyframes flash { 0%, 30% { background: var(--accent-soft); } 100% { background: transparent; } }
+.row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; text-align: left; background: none; border: 0; color: inherit; font: inherit; padding: 12px 16px; cursor: pointer; }
+.row:hover { background: var(--code-bg); }
+.row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.row code { font-size: 0.95rem; font-weight: 600; color: var(--accent); overflow-wrap: anywhere; }
+.row .sum { grid-column: 1 / -1; color: var(--fg); font-size: 0.92rem; }
+.row .chev { color: var(--muted); transition: transform .15s; font-size: 0.9rem; }
+.cmd.open .chev { transform: rotate(90deg); }
+.detail { padding: 0 16px 14px; display: flex; flex-direction: column; gap: 8px; }
+.detail ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+.detail li { font-size: 0.9rem; }
+.detail li code, .sum code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 0.85em; }
+.warn { background: var(--warn-soft); color: var(--warn); border-radius: 6px; padding: 6px 10px; font-size: 0.87rem; }
+.ex { display: flex; align-items: center; gap: 8px; background: var(--code-bg); border-radius: 6px; padding: 6px 6px 6px 12px; min-width: 0; }
+.ex code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-size: 0.85rem; }
+.exl { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); margin-top: 4px; }
+.exb { display: flex; flex-direction: column; gap: 4px; }
+.ex code { white-space: nowrap; }
+.note { font-size: 0.84rem; color: var(--muted); padding-left: 4px; }
+.out { margin: 0; background: var(--term); color: var(--term-fg); font-family: var(--f-mono); font-size: 0.8rem; line-height: 1.5; padding: 8px 12px; border-radius: 6px; overflow-x: auto; }
+.out::before { content: "출력"; display: block; font-size: 0.7rem; opacity: .6; margin-bottom: 2px; font-family: var(--f-body); }
+.scen::before { content: none; }
+.scen .c { color: #7fa39b; }
+.copy { font: inherit; font-size: 0.75rem; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 5px; padding: 3px 8px; cursor: pointer; flex: none; }
+.copy:hover, .copy:focus-visible { border-color: var(--accent); outline: none; }
+
+/* Quiz mode: hide summaries until opened */
+body.quiz .cmd:not(.open) .sum { filter: blur(6px); user-select: none; }
+.empty { color: var(--muted); text-align: center; padding: 24px; }
+footer { color: var(--muted); font-size: 0.82rem; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .cmd.flash { animation: none; } .row .chev { transition: none; } }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <h1><span>$</span> 명령어 노트</h1>
+    <p>명령어를 누르면 자세한 설명과 예시가 펼쳐져요.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-git" data-tab="git" aria-selected="true">Git</button>
+    <button class="tab" role="tab" id="t-linux" data-tab="linux" aria-selected="false">리눅스</button>
+  </div>
+
+  <div class="panel" data-panel="git">
+  <section class="flow" aria-label="기본 흐름">
+    <h2>기본 흐름 · 수정 → add → commit → push</h2>
+    <div class="zones">
+      <div class="zone z1"><b>작업 폴더</b><small>파일을 수정하는 곳</small></div>
+      <div class="arrow"><button data-go="add">add</button><i>→</i></div>
+      <div class="zone z2"><b>스테이징 영역</b><small>커밋할 대상 대기실</small></div>
+      <div class="arrow"><button data-go="commit">commit</button><i>→</i></div>
+      <div class="zone z3"><b>로컬 저장소</b><small>.git 폴더 · 버전 기록</small></div>
+      <div class="arrow"><button data-go="push">push</button><i>→</i></div>
+      <div class="zone z4"><b>원격 저장소</b><small>GitHub 등</small></div>
+    </div>
+    <div class="back">
+      <span>되돌리기:</span>
+      <button data-go="restore-staged">restore --staged</button><span>스테이징 → 작업 폴더</span>
+      <button data-go="restore">restore</button><span>수정 내용 → 마지막 커밋 상태</span>
+    </div>
+    <div class="tip">중간중간 <code>git status</code>로 지금 파일이 어느 칸에 있는지 확인하세요.</div>
+  </section>
+  <section class="flow" aria-label="실습 예시">
+    <h2>따라 해보기 · 처음부터 push까지</h2>
+    <pre class="out scen"><span class="c"># 1. 폴더를 저장소로 만들기</span>
+git init
+<span class="c"># 2. 작성자 정보 (PC에서 최초 1회)</span>
+git config --global user.name "홍길동"
+git config --global user.email "me@example.com"
+<span class="c"># 3. 파일 수정 후 상태 확인 → 올리기 → 저장</span>
+git status
+git add .
+git commit -m "첫 커밋"
+<span class="c"># 4. GitHub 연결 후 업로드 (최초 1회)</span>
+git remote add origin https://github.com/아이디/저장소.git
+git push -u origin main
+<span class="c"># 5. 이후 반복: 수정 → add → commit → push</span>
+git add .
+git commit -m "내용 수정"
+git push</pre>
+  </section>
+  </div>
+
+  <div class="panel" data-panel="linux" hidden>
+  <section class="flow" aria-label="경로 기호">
+    <h2>경로 기호</h2>
+    <div class="paths">
+      <div><code>~</code> 홈 폴더</div>
+      <div><code>.</code> 현재 폴더</div>
+      <div><code>..</code> 상위 폴더</div>
+      <div><code>-</code> 직전 폴더 (cd -)</div>
+      <div><code>.이름</code> 숨김 파일 (ls -a로 보임)</div>
+    </div>
+  </section>
+  <section class="flow" aria-label="vi 모드">
+    <h2>vi 모드 전환</h2>
+    <div class="modes">
+      <div class="zone z1"><b>명령 모드</b><small>열면 여기서 시작 · :wq / :q / :q!</small></div>
+      <div class="arrow"><span>입력하려면</span><button data-go="vi">i</button><button data-go="vi">esc</button><span>명령으로</span></div>
+      <div class="zone z3"><b>입력 모드</b><small>글자 입력 가능</small></div>
+    </div>
+    <div class="tip">글자가 안 써지면 명령 모드예요. <code>i</code>를 누르세요. 저장하려면 <code>esc</code> 후 <code>:wq</code>.</div>
+  </section>
+  <section class="flow" aria-label="실습 예시">
+    <h2>따라 해보기 · 폴더 만들고 메모 쓰기</h2>
+    <pre class="out scen">pwd                  <span class="c"># /home/user</span>
+mkdir -p study/day1  <span class="c"># study 안에 day1까지 생성</span>
+cd study/day1
+touch memo.txt
+cat > memo.txt       <span class="c"># 입력 후 Ctrl + D</span>
+cat >> memo.txt      <span class="c"># 끝에 이어 쓰기, Ctrl + D</span>
+cat memo.txt         <span class="c"># 내용 확인</span>
+vi memo.txt          <span class="c"># i → 수정 → esc → :wq</span>
+ls -al               <span class="c"># 숨김 파일까지 상세 목록</span>
+cd ..                <span class="c"># study로 올라가기</span>
+rm -r day1           <span class="c"># 폴더째 삭제 (복구 불가)</span></pre>
+  </section>
+  </div>
+
+  <div class="tools">
+    <input type="search" id="q" placeholder="검색 (예: 커밋, 삭제, 취소)" aria-label="명령어 검색">
+    <label class="toggle"><input type="checkbox" id="quiz"> 암기 모드</label>
+    <button class="btn" id="expand">모두 펼치기</button>
+  </div>
+
+  <div id="groups-git" class="groups"></div>
+  <div id="groups-linux" class="groups" hidden></div>
+  <p class="empty" id="empty" hidden>검색 결과가 없어요.</p>
+
+  <footer>암기 모드: 설명이 가려지고, 명령어를 눌러야 보여요.</footer>
+</div>
+
+<script>
+const GIT = [
+  { group: "처음 한 번 설정", items: [
+    { id: "init", cmd: "git init", sum: "현재 폴더를 Git 저장소로 초기화 (최초 1회)",
+      more: ["숨김 폴더 <code>.git</code>이 생기고, 이 안에 모든 버전 기록이 저장됨"],
+      warn: ".git 폴더를 삭제하면 버전 기록도 모두 사라짐",
+      ex: [["git init", "현재 폴더를 저장소로 만들기", "Initialized empty Git repository in /home/user/study/.git/"]] },
+    { id: "name", cmd: "git config --global user.name", sum: "커밋 기록에 남을 작성자 이름 설정",
+      more: ["최초 1회만 설정하면 됨"],
+      ex: [["git config --global user.name \"홍길동\"", "작성자 이름 등록"], ["git config --global user.name", "이름만 쓰면 현재 설정값 확인", "홍길동"]] },
+    { id: "email", cmd: "git config --global user.email", sum: "커밋 기록에 남을 작성자 이메일 설정",
+      more: ["<code>--global</code>은 PC 전체에 적용됨", "같은 명령어를 다시 쓰면 이메일 변경 가능"],
+      ex: [["git config --global user.email \"me@example.com\"", "작성자 이메일 등록"], ["git config --global --list", "설정 전체 확인", "user.name=홍길동\nuser.email=me@example.com"]] },
+  ]},
+  { group: "상태 · 기록 확인", items: [
+    { id: "status", cmd: "git status", sum: "작업 폴더의 현재 상태 확인",
+      more: ["수정됨(modified), 스테이징됨(staged), 추적 안 됨(Untracked) 파일을 보여줌"],
+      ex: [["git status", "index.html은 수정됨, memo.txt는 아직 추적 안 됨", "On branch main\nChanges not staged for commit:\n\tmodified:   index.html\n\nUntracked files:\n\tmemo.txt"]] },
+    { id: "log", cmd: "git log", sum: "커밋 이력 조회 (커밋 ID, 작성자, 날짜, 메시지)",
+      more: ["<code>--oneline</code>을 붙이면 한 줄로 요약해서 보여줌"],
+      ex: [["git log", "전체 이력", "commit a1b2c3d4e5f6... (HEAD -> main)\nAuthor: 홍길동 <me@example.com>\nDate:   Thu Oct 8 14:02:11 2026 +0900\n\n    로그인 화면 추가"], ["git log --oneline", "한 줄 요약", "a1b2c3d 로그인 화면 추가\n9f8e7d6 첫 커밋"]] },
+    { id: "diff", cmd: "git diff", sum: "변경 내용을 줄 단위로 비교",
+      more: ["그냥 쓰면: 수정 후 아직 add하지 않은 내용", "<code>--staged</code>를 붙이면: add한 내용"],
+      ex: [["git diff", "add 전 변경 내용 (- 지운 줄, + 추가한 줄)", "-<h1>안녕</h1>\n+<h1>안녕하세요</h1>"], ["git diff --staged", "add 한 뒤 커밋될 내용 확인"]] },
+  ]},
+  { group: "저장하기", items: [
+    { id: "add", cmd: "git add (파일명)", sum: "변경된 파일을 스테이징 영역에 올림 (커밋 대상으로 지정)",
+      more: ["<code>git add .</code>은 전체 파일을 올림"],
+      ex: [["git add index.html", "파일 하나만 올리기"], ["git add .", "변경된 파일 전부 올리기"]] },
+    { id: "commit", cmd: "git commit", sum: "스테이징된 변경 사항을 하나의 버전으로 저장",
+      more: ['<code>-m "메시지"</code>로 커밋 메시지를 바로 입력 가능'],
+      ex: [["git commit -m \"로그인 화면 추가\"", "메시지와 함께 커밋", "[main a1b2c3d] 로그인 화면 추가\n 1 file changed, 12 insertions(+)"]] },
+    { id: "amend", cmd: "git commit --amend", sum: "가장 최근 커밋을 수정",
+      more: ['메시지 수정: <code>git commit --amend -m "새 메시지"</code>', "빠뜨린 파일 추가: <code>git add (파일명)</code> 후 <code>git commit --amend</code>"],
+      warn: "push한 뒤에는 사용 주의 (원격 저장소와 기록이 달라짐)",
+      ex: [["git commit --amend -m \"로그인 화면 추가 (오타 수정)\"", "방금 커밋의 메시지만 바꾸기"], ["git add style.css\ngit commit --amend --no-edit", "빠뜨린 파일을 방금 커밋에 합치기 (--no-edit: 메시지 유지)"]] },
+  ]},
+  { group: "원격 저장소", items: [
+    { id: "remote", cmd: "git remote add origin (저장소 주소)", sum: "내 저장소를 GitHub 같은 원격 저장소와 연결 (최초 1회)",
+      more: ["<code>origin</code>: 원격 저장소에 붙이는 기본 별명", "<code>git remote -v</code>: 연결된 주소 확인"],
+      ex: [["git remote add origin https://github.com/아이디/저장소.git", "GitHub 저장소와 연결"], ["git remote -v", "연결 확인", "origin  https://github.com/아이디/저장소.git (fetch)\norigin  https://github.com/아이디/저장소.git (push)"]] },
+    { id: "push", cmd: "git push", sum: "내 컴퓨터의 커밋을 원격 저장소에 업로드",
+      more: ["처음에는 <code>git push -u origin main</code> (<code>-u</code>로 기본 경로를 기억시킴)", "이후에는 <code>git push</code>만 입력해도 됨"],
+      ex: [["git push -u origin main", "처음 한 번"], ["git push", "두 번째부터"]] },
+  ]},
+  { group: "되돌리기 · 취소", items: [
+    { id: "restore", cmd: "git restore (파일명)", sum: "수정한 파일을 마지막 커밋 상태로 되돌림 (add 전 변경 취소)",
+      warn: "되돌린 수정 내용은 복구 불가",
+      ex: [["git restore index.html", "index.html 수정 내용 버리기 (복구 불가)"]] },
+    { id: "restore-staged", cmd: "git restore --staged (파일명)", sum: "add 취소 (스테이징 영역에서 내림)",
+      more: ["파일의 수정 내용은 그대로 남음"],
+      ex: [["git restore --staged index.html", "add만 취소, 수정 내용은 유지"]] },
+    { id: "rmcached", cmd: "git rm --cached (파일명)", sum: "스테이징 영역 또는 Git 추적에서 파일을 제외",
+      more: ["실제 파일은 삭제되지 않고 폴더에 남음"],
+      ex: [["git rm --cached secret.txt", "추적 중단 (파일은 폴더에 남음)", "rm 'secret.txt'"]] },
+  ]},
+];
+
+
+const LINUX = [
+  { group: "이동 · 위치 확인", items: [
+    { id: "cd", cmd: "cd (경로)", sum: "지정한 경로로 이동 (change directory)",
+      more: ["<code>cd ~</code> 또는 <code>cd</code>: 홈 폴더로 이동", "<code>cd ..</code>: 상위 폴더로 이동", "<code>cd -</code>: 직전에 있던 폴더로 이동"],
+      ex: [["cd project", "project 폴더로 들어가기"], ["cd ..", "한 단계 위로"], ["cd ~", "홈 폴더로"], ["cd -", "방금 있던 폴더로 돌아가기", "/home/user/project"]] },
+    { id: "pwd", cmd: "pwd", sum: "현재 위치한 경로 출력 (print working directory)", ex: [["pwd", "지금 위치 확인", "/home/user/study"]] },
+    { id: "ls", cmd: "ls", sum: "현재 경로의 파일/폴더 목록 출력 (Windows CMD에서는 dir)",
+      more: ["<code>ls -l</code>: 크기, 날짜 등 상세 정보 표시", "<code>ls -a</code>: .git 같은 숨김 파일까지 표시"],
+      ex: [["ls", "목록", "index.html  memo.txt  images"], ["ls -l", "상세 정보", "-rw-r--r-- 1 user user  512 Oct  8 14:02 index.html\ndrwxr-xr-x 2 user user 4096 Oct  8 13:40 images"], ["ls -a", "숨김 파일 포함", ".  ..  .git  index.html  memo.txt  images"]] },
+  ]},
+  { group: "만들기", items: [
+    { id: "mkdir", cmd: "mkdir (폴더명)", sum: "새 폴더 생성 (make directory)",
+      more: ["<code>mkdir -p a/b/c</code>: 중간 폴더까지 한 번에 생성"],
+      ex: [["mkdir study", "study 폴더 만들기"], ["mkdir -p web/css/base", "중간 폴더 web, css까지 한 번에"]] },
+    { id: "touch", cmd: "touch (파일명)", sum: "빈 파일 생성 (확장자 포함해서 입력)",
+      more: ["이미 있는 파일이면 수정 시간만 갱신됨"],
+      ex: [["touch index.html", "빈 파일 만들기"], ["touch a.txt b.txt", "여러 개 한 번에"]] },
+  ]},
+  { group: "삭제하기", items: [
+    { id: "rm", cmd: "rm (파일명)", sum: "파일 삭제",
+      warn: "휴지통을 거치지 않으므로 복구 불가", ex: [["rm memo.txt", "파일 삭제 (복구 불가)"]] },
+    { id: "rmr", cmd: "rm -r (폴더명)", sum: "폴더와 그 안의 내용 전체 삭제",
+      more: ["<code>-r</code>: recursive, 하위 항목까지"], ex: [["rm -r old_folder", "폴더째 삭제"]] },
+    { id: "rmrf", cmd: "rm -rf (폴더명)", sum: "폴더 강제 삭제 (확인 문구 없이 삭제)",
+      more: ["<code>-f</code>: force"], warn: "잘못 쓰면 위험하므로 경로를 꼭 확인", ex: [["rm -rf node_modules", "확인 없이 강제 삭제. 실행 전 pwd로 위치 확인!"]] },
+  ]},
+  { group: "파일 내용 보기 · 쓰기", items: [
+    { id: "cat", cmd: "cat (파일명)", sum: "파일 내용 전체를 터미널에 출력 (편집기를 열지 않고 확인)", ex: [["cat memo.txt", "내용 출력", "오늘 할 일\n- git 공부"]] },
+    { id: "catw", cmd: "cat > (파일명)", sum: "입력한 내용으로 파일을 새로 작성 (없으면 생성)",
+      more: ["내용 입력 후 <code>Ctrl + D</code>로 저장 및 종료"],
+      warn: "이미 있는 파일이면 기존 내용이 모두 지워지고 덮어써짐", ex: [["cat > memo.txt\n오늘 할 일\n(Ctrl + D)", "새로 작성 (기존 내용은 사라짐)"]] },
+    { id: "cata", cmd: "cat >> (파일명)", sum: "입력한 내용을 기존 파일 맨 끝에 이어서 추가 (없으면 생성)",
+      more: ["내용 입력 후 <code>Ctrl + D</code>로 저장 및 종료", "기존 내용은 그대로 유지됨"], ex: [["cat >> memo.txt\n- 리눅스 공부\n(Ctrl + D)", "맨 끝에 한 줄 추가"], ["cat memo.txt", "결과 확인", "오늘 할 일\n- 리눅스 공부"]] },
+    { id: "head", cmd: "head (파일명)", sum: "파일의 앞부분 10줄만 출력",
+      more: ["<code>head -n 20 (파일)</code>: 출력할 줄 수 지정"], ex: [["head app.log", "앞 10줄"], ["head -n 3 memo.txt", "앞 3줄만"]] },
+    { id: "tail", cmd: "tail (파일명)", sum: "파일의 뒷부분 10줄만 출력",
+      more: ["<code>tail -f</code>: 내용이 추가될 때마다 실시간 출력 (로그 확인용)"], ex: [["tail app.log", "뒤 10줄"], ["tail -f app.log", "새 로그가 생길 때마다 계속 출력 (끝내려면 Ctrl + C)"]] },
+  ]},
+  { group: "편집기", items: [
+    { id: "vi", cmd: "vi (파일명)", sum: "터미널 안에서 텍스트 편집기로 파일 열기 (없으면 새로 만듦)",
+      more: ["<code>i</code>: 입력 모드 (글자 입력 가능)", "<code>esc</code>: 명령 모드로 돌아가기", "<code>:wq</code>: 저장 후 종료 (write and quit)", "<code>:q</code>: 종료 (변경 사항이 없을 때)", "<code>:q!</code>: 저장하지 않고 강제 종료"],
+      ex: [["vi memo.txt", "파일 열기 → i 눌러 입력 → esc → :wq 로 저장 후 종료"], [":q!", "실수했을 때: 저장 안 하고 나가기"]] },
+  ]},
+];
+const SETS = { git: GIT, linux: LINUX };
+const roots = [...document.querySelectorAll(".groups")];
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+Object.entries(SETS).forEach(([key, data]) => { const root = document.getElementById("groups-" + key);
+data.forEach(g => {
+  const sec = document.createElement("section");
+  sec.className = "group";
+  sec.innerHTML = `<h2>${g.group}</h2><div class="list"></div>`;
+  const list = sec.querySelector(".list");
+  g.items.forEach(it => {
+    const el = document.createElement("div");
+    el.className = "cmd";
+    el.id = "c-" + it.id;
+    el.dataset.text = (it.cmd + " " + it.sum + " " + (it.more||[]).join(" ") + " " + (it.warn||"")).replace(/<[^>]+>/g,"").toLowerCase();
+    el.innerHTML = `
+      <button class="row" aria-expanded="false" id="b-${it.id}">
+        <code>${esc(it.cmd)}</code><span class="chev" aria-hidden="true">▶</span>
+        <span class="sum">${it.sum}</span>
+      </button>
+      <div class="detail" hidden>
+        ${it.more ? `<ul>${it.more.map(m => `<li>${m}</li>`).join("")}</ul>` : ""}
+        ${it.warn ? `<div class="warn">⚠ ${it.warn}</div>` : ""}
+        ${(it.ex||[]).length ? `<div class="exl">예시</div>` : ""}
+        ${(it.ex||[]).map(x => { const [c, note, out] = Array.isArray(x) ? x : [x]; return `<div class="exb">
+          <div class="ex"><code>${esc(c).replace(/\n/g,"<br>")}</code><button class="copy" data-copy="${esc(c.split("\n")[0])}">복사</button></div>
+          ${note ? `<div class="note">${esc(note)}</div>` : ""}
+          ${out ? `<pre class="out">${esc(out)}</pre>` : ""}</div>`; }).join("")}
+      </div>`;
+    list.appendChild(el);
+  });
+  root.appendChild(sec);
+});
+});
+
+function setOpen(el, open) {
+  el.classList.toggle("open", open);
+  el.querySelector(".detail").hidden = !open;
+  el.querySelector(".row").setAttribute("aria-expanded", open);
+}
+
+roots.forEach(r => r.addEventListener("click", e => {
+  const copy = e.target.closest(".copy");
+  if (copy) {
+    const code = copy.previousElementSibling;
+    const text = copy.dataset.copy || code.textContent;
+    const done = () => { copy.textContent = "복사됨"; setTimeout(() => copy.textContent = "복사", 1200); };
+    try {
+      navigator.clipboard.writeText(text).then(done).catch(() => selectText(code));
+    } catch { selectText(code); }
+    return;
+  }
+  const row = e.target.closest(".row");
+  if (row) { const el = row.parentElement; setOpen(el, !el.classList.contains("open")); updateExpandLabel(); }
+}));
+function selectText(node) { const r = document.createRange(); r.selectNodeContents(node); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => {
+  const q = document.getElementById("q"); if (q.value) { q.value = ""; filter(); }
+  const el = document.getElementById("c-" + b.dataset.go);
+  setOpen(el, true);
+  el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+}));
+
+let current = "git";
+const activeRoot = () => document.getElementById("groups-" + current);
+function showTab(key) {
+  current = key;
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === key));
+  document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== key);
+  document.querySelectorAll(".groups").forEach(g => g.hidden = g.id !== "groups-" + key);
+  filter(); updateExpandLabel();
+  try { localStorage.setItem("cmdTab", key); } catch {}
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
+function filter() {
+  const v = document.getElementById("q").value.trim().toLowerCase();
+  let any = false;
+  activeRoot().querySelectorAll(".group").forEach(sec => {
+    let shown = 0;
+    sec.querySelectorAll(".cmd").forEach(el => { const ok = !v || el.dataset.text.includes(v); el.hidden = !ok; if (ok) shown++; });
+    sec.hidden = shown === 0; if (shown) any = true;
+  });
+  document.getElementById("empty").hidden = any;
+}
+document.getElementById("q").addEventListener("input", filter);
+
+const quiz = document.getElementById("quiz");
+try { quiz.checked = localStorage.getItem("gitQuiz") === "1"; } catch {}
+const applyQuiz = () => { document.body.classList.toggle("quiz", quiz.checked); try { localStorage.setItem("gitQuiz", quiz.checked ? "1" : "0"); } catch {} };
+quiz.addEventListener("change", () => { if (quiz.checked) document.querySelectorAll(".cmd.open").forEach(el => setOpen(el, false)); applyQuiz(); updateExpandLabel(); });
+applyQuiz();
+
+const expandBtn = document.getElementById("expand");
+const updateExpandLabel = () => { const all = [...activeRoot().querySelectorAll(".cmd")]; expandBtn.textContent = all.every(el => el.classList.contains("open")) ? "모두 접기" : "모두 펼치기"; };
+expandBtn.addEventListener("click", () => {
+  const all = [...activeRoot().querySelectorAll(".cmd")];
+  const open = !all.every(el => el.classList.contains("open"));
+  all.forEach(el => setOpen(el, open)); updateExpandLabel();
+});
+let start = location.hash === "#linux" ? "linux" : location.hash === "#git" ? "git" : null;
+if (!start) { try { start = localStorage.getItem("cmdTab"); } catch {} }
+showTab(start === "linux" ? "linux" : "git");
+</script>
+
+</body>
+</html>
