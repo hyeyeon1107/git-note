@@ -68,6 +68,14 @@ header p { margin: 0; color: var(--muted); }
   .arrow i { transform: rotate(90deg); }
 }
 
+.intro { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.intro h2 { margin: 0; font-size: 1.15rem; }
+.intro .lead { margin: 0; }
+.intro ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; font-size: 0.92rem; }
+.vs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.vs div { background: var(--code-bg); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vs b { font-family: var(--f-mono); color: var(--accent); }
+.vs span { font-size: 0.87rem; color: var(--muted); }
 /* Tabs */
 .tabs { display: flex; gap: 4px; background: var(--code-bg); padding: 4px; border-radius: 10px; width: fit-content; max-width: 100%; }
 .tab { font: inherit; font-weight: 600; font-size: 0.95rem; border: 0; background: none; color: var(--muted); padding: 7px 18px; border-radius: 7px; cursor: pointer; }
@@ -147,6 +155,19 @@ footer { color: var(--muted); font-size: 0.82rem; text-align: center; }
   </div>
 
   <div class="panel" data-panel="git">
+  <section class="intro" aria-label="Git이란">
+    <h2>Git이란?</h2>
+    <p class="lead">파일이 바뀐 기록을 버전별로 저장해 두는 <b>버전 관리 프로그램</b>이에요. 게임의 세이브 포인트처럼, 커밋할 때마다 그 순간의 상태가 저장돼요.</p>
+    <ul>
+      <li><b>되돌리기:</b> 코드를 망가뜨려도 예전 버전으로 돌아갈 수 있어요.</li>
+      <li><b>기록:</b> 언제, 누가, 무엇을 바꿨는지 남아요.</li>
+      <li><b>협업:</b> 여러 사람이 같은 프로젝트를 나눠서 작업할 수 있어요.</li>
+    </ul>
+    <div class="vs">
+      <div><b>Git</b><span>내 컴퓨터에 설치하는 프로그램. 기록은 폴더 안 .git에 저장</span></div>
+      <div><b>GitHub</b><span>Git 저장소를 올려 두는 인터넷 서비스. 백업, 공유, 사이트 공개(Pages)</span></div>
+    </div>
+  </section>
   <section class="flow" aria-label="기본 흐름">
     <h2>기본 흐름 · 수정 → add → commit → push</h2>
     <div class="zones">
@@ -187,6 +208,15 @@ git push</pre>
   </div>
 
   <div class="panel" data-panel="linux" hidden>
+  <section class="intro" aria-label="리눅스란">
+    <h2>리눅스란?</h2>
+    <p class="lead">Windows, macOS 같은 <b>운영체제</b>예요. 무료로 공개되어 있어서 전 세계 서버와 클라우드의 대부분이 리눅스로 돌아가요.</p>
+    <ul>
+      <li><b>터미널:</b> 마우스 클릭 대신 명령어를 입력해서 폴더와 파일을 다뤄요.</li>
+      <li><b>왜 배우나:</b> 서버 접속, 클라우드, 개발 도구, AI 코딩 도구가 모두 터미널 명령어를 써요.</li>
+      <li><b>어디서 쓰나:</b> 여기 정리한 명령어는 Windows의 Git Bash, macOS 터미널에서도 거의 그대로 쓸 수 있어요.</li>
+    </ul>
+  </section>
   <section class="flow" aria-label="경로 기호">
     <h2>경로 기호</h2>
     <div class="paths">
